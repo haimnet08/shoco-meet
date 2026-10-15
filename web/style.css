@@ -1,0 +1,15 @@
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,Arial,sans-serif;background:#111827;color:#f3f4f6;height:100vh}
+button,input,a.wa{font:inherit;padding:.55em 1em;border-radius:8px;border:1px solid #374151;background:#1f2937;color:inherit;cursor:pointer;text-decoration:none}
+button.primary{background:#2563eb}.danger{background:#dc2626!important}a.wa{background:#16a34a}button.on{background:#b45309}
+#lobby{display:flex;flex-direction:column;gap:12px;max-width:420px;margin:10vh auto;padding:20px;text-align:center}
+#meeting{display:flex;flex-direction:column;height:100vh}#meeting[hidden],#lobby[hidden]{display:none}
+header,footer{display:flex;gap:8px;padding:8px;flex-wrap:wrap;align-items:center;background:#0b1220}
+footer{justify-content:center}main{flex:1;display:flex;min-height:0}
+#videos{flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:8px;padding:8px;overflow:auto;align-content:start}
+.tile{position:relative;background:#000;border-radius:10px;overflow:hidden;aspect-ratio:16/9}
+.tile video{width:100%;height:100%;object-fit:contain}.tile.controlling video{outline:3px solid #f59e0b;cursor:crosshair}
+.tile .label{position:absolute;bottom:6px;right:6px;background:#0009;padding:2px 8px;border-radius:6px;font-size:.85em}
+.tile .ctrl{position:absolute;top:6px;left:6px;font-size:.8em}
+#chat{width:300px;display:flex;flex-direction:column;border-inline-start:1px solid #374151}#chat.hidden{display:none}
+#msgs{flex:1;overflow:auto;padding:8px;font-size:.9em}#msgs div{margin-bottom:6px}#chatForm{display:flex;gap:4px;padding:6px}#chatInput{flex:1}
+@media(max-width:700px){#chat{position:fixed;bottom:60px;left:0;right:0;height:40vh;width:auto;background:#111827}}

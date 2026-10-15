@@ -1,8 +1,11 @@
-/* Shoco Meet – static WebRTC mesh meeting app using PeerJS public broker */
+/* Shoco Meet – static WebRTC mesh meeting app. Signaling: our own PeerJS broker + TURN on meet.shocoweb.com (SSL) */
 'use strict';
-const PUBLIC_URL = 'https://haimnet08.github.io/shoco-meet/';
+const PUBLIC_URL = 'https://meet.shocoweb.com/';
+// Our signaling server (PeerJS broker behind nginx with SSL) and the endpoint that hands out time-limited TURN credentials
+const SIGNAL = { host: 'meet.shocoweb.com', port: 443, path: '/peerjs', secure: true };
+const TURN_URL = 'https://meet.shocoweb.com/turn';
 const PREFIX = 'shocomeet-';
-const ICE = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
+let ICE = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] }; // fallback until /turn answers
 const isDesktop = !!window.shocoDesktop;
 const $ = (id) => document.getElementById(id);
 
@@ -39,7 +42,8 @@ async function start() {
   localStorage.setItem('shoco-name', myName);
   room = sanitize($('room').value) || Math.random().toString(36).slice(2, 10);
   $('lobbyMsg').textContent = 'מתחבר...';
-  camStream = await getCam();
+  const [cam] = await Promise.all([getCam(), loadIce()]);
+  camStream = cam;
   outStream = new MediaStream(camStream.getTracks());
   history.replaceState(null, '', location.protocol.startsWith('http') ? '?room=' + room : location.href);
   const link = baseUrl() + '?room=' + room;
@@ -52,8 +56,18 @@ async function start() {
   if (isDesktop) setTimeout(() => toggleShare().catch(() => {}), 500);
 }
 
+// TURN credentials from our server (valid 12h); without them only direct/STUN connections work
+async function loadIce() {
+  try {
+    const r = await fetch(TURN_URL, { cache: 'no-store' });
+    const j = await r.json();
+    if (j && Array.isArray(j.iceServers) && j.iceServers.length) ICE = { iceServers: j.iceServers };
+  } catch (e) { console.warn('TURN credentials unavailable, STUN only', e); }
+}
+
 function connectPeer(id) {
-  peer = id ? new Peer(id, { config: ICE }) : new Peer({ config: ICE });
+  const opts = { ...SIGNAL, config: ICE };
+  peer = id ? new Peer(id, opts) : new Peer(opts);
   peer.on('open', (myId) => {
     isHost = myId === PREFIX + room;
     status(isHost ? 'ממתין למשתתפים...' : 'מחובר');
@@ -62,6 +76,7 @@ function connectPeer(id) {
   peer.on('error', (e) => {
     if (e.type === 'unavailable-id') { peer.destroy(); connectPeer(null); return; }
     if (e.type === 'peer-unavailable') { status('המשתתף לא זמין'); return; }
+    if (e.type === 'network' || e.type === 'server-error' || e.type === 'socket-error' || e.type === 'socket-closed') { status('אין חיבור לשרת הפגישות (meet.shocoweb.com)'); return; }
     status('שגיאה: ' + e.type);
   });
   peer.on('connection', (c) => setupData(c));

@@ -1,0 +1,20 @@
+[Unit]
+Description=Shoco Meet signaling (PeerJS broker + TURN credentials) on 127.0.0.1:9000
+After=network.target
+
+[Service]
+Type=simple
+User=nobody
+Group=nogroup
+WorkingDirectory=/opt/shoco-meet/peer-server
+EnvironmentFile=/etc/shoco-meet/env
+ExecStart=/usr/local/bin/node /opt/shoco-meet/peer-server/server.js
+Restart=always
+RestartSec=3
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

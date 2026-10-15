@@ -1,0 +1,1 @@
+17 4 * * * root /opt/shoco-meet/bin/sync-turn-cert.sh >/dev/null 2>&1

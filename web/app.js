@@ -161,7 +161,7 @@ async function onData(id, m) {
     case 'ctrl-req':
       if (!isDesktop) return send(id, { type: 'ctrl-res', ok: false });
       const ok = await window.shocoDesktop.askConsent(p.name);
-      if (ok) controllerId = id;
+      if (ok) { controllerId = id; if (!screenTrack) await toggleShare().catch(() => {}); } // consent to control implies showing the screen
       send(id, { type: 'ctrl-res', ok });
       break;
     case 'ctrl-res':

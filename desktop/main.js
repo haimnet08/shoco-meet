@@ -55,6 +55,7 @@ function setupUpdates() {
   setTimeout(check, 5000);
   setInterval(check, 6 * 3600 * 1000);
 }
+ipcMain.handle('version', () => app.getVersion());
 ipcMain.on('install-update', () => { if (autoUpdater) { try { autoUpdater.quitAndInstall(false, true); } catch (e) { console.error(e.message); } } });
 
 app.whenReady().then(() => {
@@ -62,7 +63,8 @@ app.whenReady().then(() => {
   setupUpdates();
   session.defaultSession.setDisplayMediaRequestHandler(async (_req, cb) => {
     const sources = await desktopCapturer.getSources({ types: ['screen'] });
-    cb({ video: sources[0] }); // primary screen (coordinates map to primary display)
+    const primary = String(screen.getPrimaryDisplay().id);
+    cb({ video: sources.find((s) => String(s.display_id) === primary) || sources[0] }); // remote-control coordinates map to the primary display
   });
   win = new BrowserWindow({ width: 1200, height: 800, webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true } });
   win.setMenuBarVisibility(false);

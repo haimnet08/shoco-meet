@@ -246,6 +246,7 @@ const RELEASES = 'https://github.com/haimnet08/shoco-meet/releases/latest';
 const STORE_URL = ''; // Microsoft Store page once the app is listed (apps.microsoft.com/detail/<ProductId>); empty = GitHub installer
 if (STORE_URL) { $('dlWin').href = STORE_URL; $('lobbyDl').href = STORE_URL; }
 if (isDesktop) $('dlBtn').hidden = true; // already installed
+if (isDesktop && window.shocoDesktop.getVersion) window.shocoDesktop.getVersion().then((v) => { if (v) $('ver').textContent = ' · Shoco Meet ' + v; }).catch(() => {});
 $('dlBtn').onclick = () => {
   $('dlRoom').textContent = room;
   const ua = navigator.userAgent, mine = /Windows/i.test(ua) ? 'dlWin' : /Mac/i.test(ua) ? 'dlMac' : /Linux|X11/i.test(ua) ? 'dlLinux' : '';

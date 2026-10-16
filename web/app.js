@@ -139,10 +139,11 @@ function setupCall(call) {
   call.on('close', () => drop(call.peer));
 }
 
+function controlEnded() { controllerId = null; if (isDesktop && window.shocoDesktop.controlEnded) window.shocoDesktop.controlEnded(); } // (desktop side) bring the window back
 function drop(id) {
   const p = peers.get(id); if (!p) return;
   peers.delete(id); p.tile && p.tile.remove(); if (focusId === id) setFocus(null); layoutTiles(); updateStatus();
-  if (controllerId === id) controllerId = null;
+  if (controllerId === id) controlEnded();
   if (controlling === id) controlling = null;
   if (p.call) p.call.close(); if (p.data) p.data.close();
 }
@@ -167,7 +168,7 @@ async function onData(id, m) {
       if (m.ok) { controlling = id; refreshTile(id); setFocus(id); $('chat').classList.add('hidden'); addMsg('מערכת', 'השליטה אושרה – ' + p.name + '. לחץ ⛶ על האריח למסך מלא.'); }
       else addMsg('מערכת', 'הבקשה לשליטה נדחתה');
       break;
-    case 'ctrl-end': if (controllerId === id) controllerId = null; if (controlling === id) { controlling = null; refreshTile(id); setFocus(null); } break;
+    case 'ctrl-end': if (controllerId === id) controlEnded(); if (controlling === id) { controlling = null; refreshTile(id); setFocus(null); } break;
     case 'in': if (isDesktop && controllerId === id) window.shocoDesktop.input(m.e); break;
   }
 }

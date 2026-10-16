@@ -81,8 +81,10 @@ ipcMain.handle('consent', async (_e, name) => {
     detail: 'אשר רק אם אתה סומך על האדם הזה. ניתן לעצור בכל רגע ע"י סגירת האפליקציה.',
   });
   controlAllowed = r.response === 0;
+  if (controlAllowed && win) win.minimize(); // get out of the way: the shared screen should show the desktop, not this window
   return controlAllowed;
 });
+ipcMain.on('control-ended', () => { controlAllowed = false; if (win && win.isMinimized()) { win.restore(); win.focus(); } });
 
 const BTN = () => [nut.Button.LEFT, nut.Button.MIDDLE, nut.Button.RIGHT];
 function mapKey(code, key) {

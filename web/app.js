@@ -13,6 +13,7 @@ let peer, room, myName, camStream, outStream, screenTrack = null, recorder = nul
 const peers = new Map(); // id -> {data, call, name, desktop, tile, stream}
 let controllerId = null; // (desktop side) who controls us
 let controlling = null;  // (browser side) id we control
+let focusId = null;      // tile shown alone (set while controlling, or by double-click)
 
 const qs = new URLSearchParams(location.search);
 $('room').value = qs.get('room') || '';
@@ -139,12 +140,13 @@ function setupCall(call) {
 
 function drop(id) {
   const p = peers.get(id); if (!p) return;
-  peers.delete(id); p.tile && p.tile.remove(); layoutTiles();
+  peers.delete(id); p.tile && p.tile.remove(); if (focusId === id) setFocus(null); layoutTiles(); updateStatus();
   if (controllerId === id) controllerId = null;
   if (controlling === id) controlling = null;
   if (p.call) p.call.close(); if (p.data) p.data.close();
 }
 
+function updateStatus() { const n = [...peers.values()].filter((p) => p.tile).length; status(n ? `משתתפים: ${n + 1}` : isHost ? 'ממתין למשתתפים...' : 'מחובר'); }
 function send(id, m) { const p = peers.get(id); if (p && p.data && p.data.open) p.data.send(m); }
 function broadcast(m) { for (const id of peers.keys()) send(id, m); }
 
@@ -161,10 +163,10 @@ async function onData(id, m) {
       send(id, { type: 'ctrl-res', ok });
       break;
     case 'ctrl-res':
-      if (m.ok) { controlling = id; refreshTile(id); addMsg('מערכת', 'השליטה אושרה – ' + p.name); }
+      if (m.ok) { controlling = id; refreshTile(id); setFocus(id); $('chat').classList.add('hidden'); addMsg('מערכת', 'השליטה אושרה – ' + p.name + '. לחץ ⛶ על האריח למסך מלא.'); }
       else addMsg('מערכת', 'הבקשה לשליטה נדחתה');
       break;
-    case 'ctrl-end': if (controllerId === id) controllerId = null; if (controlling === id) { controlling = null; refreshTile(id); } break;
+    case 'ctrl-end': if (controllerId === id) controllerId = null; if (controlling === id) { controlling = null; refreshTile(id); setFocus(null); } break;
     case 'in': if (isDesktop && controllerId === id) window.shocoDesktop.input(m.e); break;
   }
 }
@@ -176,9 +178,13 @@ function addTile(id, name, stream, muted) {
   if (!tile) {
     tile = document.createElement('div'); tile.className = 'tile'; tile.id = 'tile-' + id;
     tile.innerHTML = '<video autoplay playsinline></video><span class="label"></span>';
+    const fs = document.createElement('button'); fs.className = 'fs'; fs.textContent = '⛶'; fs.title = 'מסך מלא / Full screen';
+    fs.onclick = () => { document.fullscreenElement ? document.exitFullscreen() : tile.requestFullscreen().catch(() => {}); };
+    tile.appendChild(fs);
+    tile.ondblclick = (e) => { if (e.target.tagName === 'BUTTON' || controlling === id) return; setFocus(focusId === id ? null : id); };
     $('videos').appendChild(tile);
     if (p) p.tile = tile;
-    layoutTiles();
+    layoutTiles(); if (p) updateStatus();
   }
   const v = tile.querySelector('video'); v.srcObject = stream; v.muted = !!muted;
   tile.querySelector('.label').textContent = name;
@@ -188,8 +194,15 @@ function addTile(id, name, stream, muted) {
 // Gallery layout: pick the column count that gives every 16:9 tile the largest size inside the
 // visible area, so all tiles share one height and nothing is cut off or scrolled (phones, small
 // or scaled Windows windows). Re-run on every tile change and whenever the area resizes.
+// One tile alone (the controlled screen, or a double-clicked tile); the others are hidden until focus is cleared.
+function setFocus(id) {
+  focusId = id;
+  for (const t of $('videos').children) t.classList.toggle('focused', !!id && t.id === 'tile-' + id);
+  $('videos').classList.toggle('focus', !!id);
+  layoutTiles();
+}
 function layoutTiles() {
-  const box = $('videos'), n = box.children.length; if (!n) return;
+  const box = $('videos'), n = focusId ? 1 : box.children.length; if (!n) return;
   const gap = 8, W = box.clientWidth - 16, H = box.clientHeight - 16;
   let best = { cols: 1, rows: n, size: -1 };
   for (let cols = 1; cols <= n; cols++) {
@@ -211,7 +224,7 @@ function refreshTile(id) {
     if (!b) { b = document.createElement('button'); b.className = 'ctrl'; p.tile.appendChild(b); }
     b.textContent = controlling === id ? 'הפסק שליטה' : '🖱️ בקש שליטה';
     b.onclick = () => {
-      if (controlling === id) { send(id, { type: 'ctrl-end' }); controlling = null; refreshTile(id); }
+      if (controlling === id) { send(id, { type: 'ctrl-end' }); controlling = null; refreshTile(id); setFocus(null); }
       else { send(id, { type: 'ctrl-req' }); addMsg('מערכת', 'נשלחה בקשת שליטה ל-' + p.name); }
     };
   }

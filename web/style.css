@@ -12,6 +12,8 @@ footer{justify-content:center}main{flex:1;display:flex;min-height:0}
 .tile video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}.tile.controlling video{outline:3px solid #f59e0b;cursor:crosshair}
 .tile .label{position:absolute;bottom:6px;right:6px;background:#0009;padding:2px 8px;border-radius:6px;font-size:.85em}
 .tile .ctrl{position:absolute;top:6px;left:6px;font-size:.8em}
+.tile .fs{position:absolute;top:6px;right:6px;font-size:.9em;padding:.2em .5em;opacity:.7}.tile .fs:hover{opacity:1}
+#videos.focus .tile:not(.focused){display:none}.tile:fullscreen{border-radius:0}
 #chat{width:300px;display:flex;flex-direction:column;border-inline-start:1px solid #374151}#chat.hidden{display:none}
 #msgs{flex:1;overflow:auto;padding:8px;font-size:.9em}#msgs div{margin-bottom:6px}#chatForm{display:flex;gap:4px;padding:6px}#chatInput{flex:1}
 @media(max-width:700px){#chat{position:fixed;bottom:60px;left:0;right:0;height:40vh;width:auto;background:#111827}}

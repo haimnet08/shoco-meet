@@ -1,6 +1,6 @@
 {
   "name": "shoco-meet-desktop",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Shoco Meet desktop app – share screen and allow remote control (with consent)",
   "main": "main.js",
   "author": "haimnet08",

@@ -110,7 +110,7 @@ function setupCall(call) {
 
 function drop(id) {
   const p = peers.get(id); if (!p) return;
-  peers.delete(id); p.tile && p.tile.remove();
+  peers.delete(id); p.tile && p.tile.remove(); layoutTiles();
   if (controllerId === id) controllerId = null;
   if (controlling === id) controlling = null;
   if (p.call) p.call.close(); if (p.data) p.data.close();
@@ -149,11 +149,30 @@ function addTile(id, name, stream, muted) {
     tile.innerHTML = '<video autoplay playsinline></video><span class="label"></span>';
     $('videos').appendChild(tile);
     if (p) p.tile = tile;
+    layoutTiles();
   }
   const v = tile.querySelector('video'); v.srcObject = stream; v.muted = !!muted;
   tile.querySelector('.label').textContent = name;
   if (p) { refreshTile(id); attachControl(id, v); }
 }
+
+// Gallery layout: pick the column count that gives every 16:9 tile the largest size inside the
+// visible area, so all tiles share one height and nothing is cut off or scrolled (phones, small
+// or scaled Windows windows). Re-run on every tile change and whenever the area resizes.
+function layoutTiles() {
+  const box = $('videos'), n = box.children.length; if (!n) return;
+  const gap = 8, W = box.clientWidth - 16, H = box.clientHeight - 16;
+  let best = { cols: 1, rows: n, size: -1 };
+  for (let cols = 1; cols <= n; cols++) {
+    const rows = Math.ceil(n / cols);
+    const tw = (W - gap * (cols - 1)) / cols, th = (H - gap * (rows - 1)) / rows;
+    const size = Math.min(tw / 16, th / 9);
+    if (size > best.size) best = { cols, rows, size };
+  }
+  box.style.gridTemplateColumns = `repeat(${best.cols},minmax(0,1fr))`;
+  box.style.gridTemplateRows = `repeat(${best.rows},minmax(0,1fr))`;
+}
+new ResizeObserver(() => layoutTiles()).observe($('videos'));
 
 function refreshTile(id) {
   const p = peers.get(id); if (!p || !p.tile) return;
@@ -172,7 +191,12 @@ function refreshTile(id) {
 
 function addMsg(who, text) {
   const d = document.createElement('div'); const b = document.createElement('b');
-  b.textContent = who + ': '; d.append(b, document.createTextNode(text));
+  b.textContent = who + ': '; d.append(b);
+  // plain text, with http(s) links made clickable
+  String(text).split(/(https?:\/\/[^\s<>"']+)/).forEach((part, i) => {
+    if (i % 2) { const a = document.createElement('a'); a.href = part; a.textContent = part; a.target = '_blank'; a.rel = 'noopener'; d.append(a); }
+    else if (part) d.append(document.createTextNode(part));
+  });
   $('msgs').appendChild(d); $('msgs').scrollTop = 1e9;
 }
 $('chatForm').onsubmit = (e) => {
@@ -180,6 +204,28 @@ $('chatForm').onsubmit = (e) => {
   broadcast({ type: 'chat', text: t.slice(0, 2000) }); addMsg(myName, t); $('chatInput').value = '';
 };
 $('chatToggle').onclick = () => $('chat').classList.toggle('hidden');
+
+/* ---------- Desktop app download (for remote control) ---------- */
+const RELEASES = 'https://github.com/haimnet08/shoco-meet/releases/latest';
+if (isDesktop) $('dlBtn').hidden = true; // already installed
+$('dlBtn').onclick = () => {
+  $('dlRoom').textContent = room;
+  const ua = navigator.userAgent, mine = /Windows/i.test(ua) ? 'dlWin' : /Mac/i.test(ua) ? 'dlMac' : /Linux|X11/i.test(ua) ? 'dlLinux' : '';
+  ['dlWin', 'dlMac', 'dlLinux'].forEach((id) => $(id).classList.toggle('mine', id === mine));
+  $('dl').showModal();
+  // point the buttons at the real files of the latest release (names may change between versions)
+  fetch('https://api.github.com/repos/haimnet08/shoco-meet/releases/latest').then((r) => r.json()).then((rel) => {
+    (rel.assets || []).forEach((a) => {
+      const id = /\.exe$/i.test(a.name) ? 'dlWin' : /\.dmg$/i.test(a.name) ? 'dlMac' : /\.AppImage$/i.test(a.name) ? 'dlLinux' : null;
+      if (id) $(id).href = a.browser_download_url;
+    });
+  }).catch(() => {});
+};
+$('dlClose').onclick = () => $('dl').close();
+$('dlChat').onclick = () => {
+  const t = 'כדי שאוכל לשלוט במחשב שלך: הורד והתקן את Shoco Meet מכאן ' + RELEASES + ' , פתח את התוכנה והצטרף לחדר ' + room + ' (או לחץ על "שליטה מרחוק" למטה להסבר).';
+  broadcast({ type: 'chat', text: t }); addMsg(myName, t); $('chat').classList.remove('hidden'); $('dl').close();
+};
 
 $('micBtn').onclick = () => {
   const t = camStream.getAudioTracks(); if (!t.length) return status('אין מיקרופון');

@@ -5,11 +5,16 @@ button.primary{background:#2563eb}.danger{background:#dc2626!important}a.wa{back
 #meeting{display:flex;flex-direction:column;height:100vh}#meeting[hidden],#lobby[hidden]{display:none}
 header,footer{display:flex;gap:8px;padding:8px;flex-wrap:wrap;align-items:center;background:#0b1220}
 footer{justify-content:center}main{flex:1;display:flex;min-height:0}
-#videos{flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:8px;padding:8px;overflow:auto;align-content:start}
-.tile{position:relative;background:#000;border-radius:10px;overflow:hidden;aspect-ratio:16/9}
-.tile video{width:100%;height:100%;object-fit:contain}.tile.controlling video{outline:3px solid #f59e0b;cursor:crosshair}
+#videos{flex:1;min-width:0;min-height:0;display:grid;grid-template-columns:1fr;grid-auto-rows:minmax(0,1fr);gap:8px;padding:8px;overflow:hidden}
+.tile{position:relative;background:#000;border-radius:10px;overflow:hidden;min-width:0;min-height:0}
+.tile video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}.tile.controlling video{outline:3px solid #f59e0b;cursor:crosshair}
 .tile .label{position:absolute;bottom:6px;right:6px;background:#0009;padding:2px 8px;border-radius:6px;font-size:.85em}
 .tile .ctrl{position:absolute;top:6px;left:6px;font-size:.8em}
 #chat{width:300px;display:flex;flex-direction:column;border-inline-start:1px solid #374151}#chat.hidden{display:none}
 #msgs{flex:1;overflow:auto;padding:8px;font-size:.9em}#msgs div{margin-bottom:6px}#chatForm{display:flex;gap:4px;padding:6px}#chatInput{flex:1}
 @media(max-width:700px){#chat{position:fixed;bottom:60px;left:0;right:0;height:40vh;width:auto;background:#111827}}
+#dl{background:#1f2937;color:#f3f4f6;border:1px solid #374151;border-radius:12px;padding:20px 24px;max-width:460px;width:calc(100% - 32px);font-size:.95em}
+#dl::backdrop{background:#000a}#dl h2{margin:0 0 8px;font-size:1.2em}#dl ol{padding-inline-start:20px}#dl li{margin-bottom:6px}#dl .small{font-size:.85em;color:#9ca3af}#dl .small a{color:#93c5fd}
+.dl-links{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.dl-links a{flex:1;text-align:center;padding:.6em .8em;border-radius:8px;background:#374151;color:inherit;text-decoration:none;white-space:nowrap}
+.dl-links a.mine{background:#2563eb;font-weight:600}.dl-actions{display:flex;gap:8px;justify-content:flex-start;margin-top:12px}
+#msgs a{color:#93c5fd;word-break:break-all}

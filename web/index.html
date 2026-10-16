@@ -35,9 +35,29 @@
     <button id="shareBtn">🖥️ שיתוף מסך</button>
     <button id="recBtn">⏺️ הקלטה</button>
     <button id="chatToggle">💬 צ'אט</button>
+    <button id="dlBtn">💻 שליטה מרחוק</button>
     <button id="leaveBtn" class="danger">יציאה</button>
   </footer>
 </section>
+<dialog id="dl">
+  <h2>תוכנת Shoco Meet למחשב</h2>
+  <p>כדי לאפשר שליטה מרחוק במחשב שלך, הורד והתקן את התוכנה (חינם, חד פעמי):</p>
+  <div class="dl-links">
+    <a id="dlWin" href="https://github.com/haimnet08/shoco-meet/releases/latest/download/Shoco-Meet-win.exe">🪟 Windows</a>
+    <a id="dlMac" href="https://github.com/haimnet08/shoco-meet/releases/latest/download/Shoco-Meet-mac.dmg">🍎 Mac (Apple Silicon)</a>
+    <a id="dlLinux" href="https://github.com/haimnet08/shoco-meet/releases/latest/download/Shoco-Meet-linux.AppImage">🐧 Linux</a>
+  </div>
+  <ol>
+    <li>הורד והתקן. ב-Windows ייתכן שתופיע אזהרה חד פעמית: לחץ <b>מידע נוסף</b> ואז <b>הפעל בכל זאת</b>.</li>
+    <li>פתח את התוכנה, הקלד את השם שלך ואת קוד החדר: <b id="dlRoom"></b></li>
+    <li>לחץ "הצטרף". התוכנה תשתף את המסך ותבקש את אישורך לפני שמישהו שולט במחשב.</li>
+  </ol>
+  <p class="small">גרסאות נוספות: <a href="https://github.com/haimnet08/shoco-meet/releases/latest" target="_blank" rel="noopener">כל ההורדות</a></p>
+  <div class="dl-actions">
+    <button id="dlChat">שלח את הקישור בצ'אט</button>
+    <button id="dlClose" class="primary">סגור</button>
+  </div>
+</dialog>
 <script src="app.js"></script>
 </body>
 </html>

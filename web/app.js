@@ -40,8 +40,20 @@ function baseUrl() { return location.protocol.startsWith('http') ? location.orig
 function status(t) { $('status').textContent = t; }
 function sanitize(s) { return s.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 40); }
 
+// Prefer a physical camera: Windows lists the Phone Link / OBS virtual cameras first, and opening the
+// Phone Link one wakes the phone's camera app. Labels are known up front in the desktop app (and in the
+// browser after the first permission); without labels we fall back to the default camera.
+const VIRTUAL_CAM = /virtual|phone link|obs|droidcam|iriun|snap camera|epoccam|camo|ndi/i;
+async function pickCamera() {
+  try {
+    const cams = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'videoinput');
+    const real = cams.filter((d) => d.label && !VIRTUAL_CAM.test(d.label));
+    if (real.length) return { deviceId: { exact: real[0].deviceId } };
+  } catch (e) {}
+  return true;
+}
 async function getCam() {
-  try { return await navigator.mediaDevices.getUserMedia({ video: true, audio: true }); } catch (e) {}
+  try { return await navigator.mediaDevices.getUserMedia({ video: await pickCamera(), audio: true }); } catch (e) {}
   let s;
   try { s = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch (e) { s = new MediaStream(); }
   // placeholder video track so screen share can replaceTrack later

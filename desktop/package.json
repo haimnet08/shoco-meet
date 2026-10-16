@@ -1,6 +1,6 @@
 {
   "name": "shoco-meet-desktop",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Shoco Meet desktop app – share screen and allow remote control (with consent)",
   "main": "main.js",
   "author": "haimnet08",
@@ -10,7 +10,8 @@
     "dist": "electron-builder --publish never"
   },
   "dependencies": {
-    "@nut-tree-fork/nut-js": "^4.2.6"
+    "@nut-tree-fork/nut-js": "^4.2.6",
+    "electron-updater": "^6.3.9"
   },
   "devDependencies": {
     "electron": "^31.7.7",
@@ -23,6 +24,7 @@
     "extraResources": [{ "from": "../web", "to": "web" }],
     "artifactName": "Shoco-Meet-${os}.${ext}",
     "protocols": [{ "name": "Shoco Meet", "schemes": ["shocomeet"] }],
+    "publish": [{ "provider": "github", "owner": "haimnet08", "repo": "shoco-meet", "releaseType": "release" }],
     "win": { "target": "nsis" },
     "mac": { "target": "dmg", "category": "public.app-category.business" },
     "linux": { "target": "AppImage", "category": "Network" }

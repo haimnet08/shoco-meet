@@ -1,6 +1,8 @@
-const { app, BrowserWindow, ipcMain, dialog, session, desktopCapturer, screen } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, session, desktopCapturer, screen, shell } = require('electron');
 const path = require('path');
 const os = require('os');
+let autoUpdater = null;
+try { ({ autoUpdater } = require('electron-updater')); } catch (e) { console.error('electron-updater unavailable:', e.message); }
 
 let nut = null;
 try { nut = require('@nut-tree-fork/nut-js'); nut.mouse.config.autoDelayMs = 0; nut.keyboard.config.autoDelayMs = 0; }
@@ -31,8 +33,33 @@ app.on('second-instance', (_e, argv) => {
 });
 app.on('open-url', (e, url) => { e.preventDefault(); const r = roomFromUrl(url); if (!r) return; if (win) openRoom(r); else pendingRoom = r; }); // macOS
 
+/* ---------- Auto-update from GitHub Releases ----------
+   Windows/Linux: download in the background, install on the next quit (or now, from the in-app banner).
+   macOS: unsigned builds cannot self-install, so only announce the new version with a download link. */
+const RELEASES_URL = 'https://github.com/haimnet08/shoco-meet/releases/latest';
+function setupUpdates() {
+  if (!autoUpdater || !app.isPackaged) return;
+  autoUpdater.logger = null;
+  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.autoDownload = process.platform !== 'darwin';
+  autoUpdater.on('error', (e) => console.error('update error:', e && e.message));
+  autoUpdater.on('update-downloaded', (info) => win && win.webContents.send('update-ready', info.version));
+  if (process.platform === 'darwin') {
+    autoUpdater.on('update-available', async (info) => {
+      const r = await dialog.showMessageBox(win, { type: 'info', buttons: ['הורד / Download', 'אחר כך / Later'], defaultId: 0, cancelId: 1,
+        title: 'Shoco Meet', message: `גרסה ${info.version} זמינה / Version ${info.version} is available`, detail: 'הורד והתקן מהאתר. / Download and install from the releases page.' });
+      if (r.response === 0) shell.openExternal(RELEASES_URL);
+    });
+  }
+  const check = () => autoUpdater.checkForUpdates().catch(() => {});
+  setTimeout(check, 5000);
+  setInterval(check, 6 * 3600 * 1000);
+}
+ipcMain.on('install-update', () => { if (autoUpdater) { try { autoUpdater.quitAndInstall(false, true); } catch (e) { console.error(e.message); } } });
+
 app.whenReady().then(() => {
   if (app.isPackaged) { try { app.setAsDefaultProtocolClient(PROTO); } catch (e) {} }
+  setupUpdates();
   session.defaultSession.setDisplayMediaRequestHandler(async (_req, cb) => {
     const sources = await desktopCapturer.getSources({ types: ['screen'] });
     cb({ video: sources[0] }); // primary screen (coordinates map to primary display)

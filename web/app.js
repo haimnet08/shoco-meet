@@ -222,6 +222,13 @@ $('chatForm').onsubmit = (e) => {
 };
 $('chatToggle').onclick = () => $('chat').classList.toggle('hidden');
 
+/* ---------- In-app update (desktop): the main process downloaded a new version ---------- */
+if (isDesktop && window.shocoDesktop.onUpdateReady) {
+  window.shocoDesktop.onUpdateReady((v) => { $('updateMsg').textContent = 'גרסה ' + v + ' של Shoco Meet מוכנה להתקנה (או שתותקן לבד בסגירה הבאה).'; $('updateBar').hidden = false; });
+  $('updateNow').onclick = () => window.shocoDesktop.installUpdate();
+  $('updateLater').onclick = () => { $('updateBar').hidden = true; };
+}
+
 /* ---------- Desktop app download (for remote control) ---------- */
 const RELEASES = 'https://github.com/haimnet08/shoco-meet/releases/latest';
 if (isDesktop) $('dlBtn').hidden = true; // already installed

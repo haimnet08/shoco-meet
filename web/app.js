@@ -16,8 +16,25 @@ let controlling = null;  // (browser side) id we control
 
 const qs = new URLSearchParams(location.search);
 $('room').value = qs.get('room') || '';
-$('name').value = localStorage.getItem('shoco-name') || '';
+$('name').value = localStorage.getItem('shoco-name') || qs.get('name') || '';
 $('joinBtn').onclick = start;
+
+/* ---------- Enter through the desktop app, not the browser ----------
+   Browser + invite link: try to open the installed app (shocomeet://join?room=...), show the button + download.
+   Desktop app opened by such a link: room (and the Windows user name) arrive as query params -> join at once. */
+const APP_LINK = (r) => 'shocomeet://join?room=' + encodeURIComponent(r);
+const isMobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
+if (isDesktop) {
+  if ($('room').value && $('name').value) setTimeout(start, 100);
+} else if ($('room').value && !isMobile) {
+  const r = sanitize($('room').value);
+  $('appOpen').hidden = false; $('lobby').insertBefore($('appOpen'), $('name')); // app first, browser below
+  $('openApp').href = APP_LINK(r);
+  $('joinBtn').textContent = 'הצטרף מהדפדפן';
+  $('joinBtn').classList.remove('primary');
+  if (/Mac/i.test(navigator.userAgent)) { $('lobbyDl').href = 'https://github.com/haimnet08/shoco-meet/releases/latest/download/Shoco-Meet-mac.dmg'; $('lobbyDl').textContent = 'הורד ל-Mac'; }
+  setTimeout(() => { try { location.href = APP_LINK(r); } catch (e) {} }, 300); // Chrome asks "open Shoco Meet?" if installed; silent if not
+}
 
 function baseUrl() { return location.protocol.startsWith('http') ? location.origin + location.pathname : PUBLIC_URL; }
 function status(t) { $('status').textContent = t; }
@@ -48,7 +65,7 @@ async function start() {
   history.replaceState(null, '', location.protocol.startsWith('http') ? '?room=' + room : location.href);
   const link = baseUrl() + '?room=' + room;
   $('roomLabel').textContent = 'חדר: ' + room;
-  $('waBtn').href = 'https://wa.me/?text=' + encodeURIComponent('הצטרף לפגישה שלי ב-Shoco Meet: ' + link);
+  $('waBtn').href = 'https://wa.me/?text=' + encodeURIComponent('הצטרף לפגישה שלי ב-Shoco Meet: ' + link + '\n(אם תוכנת Shoco Meet מותקנת אצלך, הקישור יפתח אותה ישירות)');
   $('copyBtn').onclick = () => navigator.clipboard.writeText(link).then(() => status('הקישור הועתק'));
   $('lobby').hidden = true; $('meeting').hidden = false;
   addTile('me', myName + ' (אני)', outStream, true);

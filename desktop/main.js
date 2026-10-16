@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog, session, desktopCapturer, screen } = require('electron');
 const path = require('path');
+const os = require('os');
 
 let nut = null;
 try { nut = require('@nut-tree-fork/nut-js'); nut.mouse.config.autoDelayMs = 0; nut.keyboard.config.autoDelayMs = 0; }
@@ -9,14 +10,36 @@ let win, controlAllowed = false;
 
 function webDir() { return app.isPackaged ? path.join(process.resourcesPath, 'web') : path.join(__dirname, '..', 'web'); }
 
+/* ---------- shocomeet://join?room=<code> links (sent by the web page / WhatsApp) ---------- */
+const PROTO = 'shocomeet';
+function roomFromUrl(u) {
+  try { const x = new URL(u); if (x.protocol !== PROTO + ':') return null; return (x.searchParams.get('room') || x.hostname || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 40) || null; }
+  catch (e) { return null; }
+}
+function roomFromArgv(argv) { for (const a of argv) { const r = roomFromUrl(a); if (r) return r; } return null; }
+let pendingRoom = roomFromArgv(process.argv);
+function userName() { try { return os.userInfo().username; } catch (e) { return ''; } }
+function openRoom(room) {
+  const q = { name: userName() }; if (room) q.room = room;
+  win && win.loadFile(path.join(webDir(), 'index.html'), { query: q });
+}
+
+if (!app.requestSingleInstanceLock()) { app.quit(); }
+app.on('second-instance', (_e, argv) => {
+  const r = roomFromArgv(argv);
+  if (win) { if (win.isMinimized()) win.restore(); win.focus(); if (r) openRoom(r); }
+});
+app.on('open-url', (e, url) => { e.preventDefault(); const r = roomFromUrl(url); if (!r) return; if (win) openRoom(r); else pendingRoom = r; }); // macOS
+
 app.whenReady().then(() => {
+  if (app.isPackaged) { try { app.setAsDefaultProtocolClient(PROTO); } catch (e) {} }
   session.defaultSession.setDisplayMediaRequestHandler(async (_req, cb) => {
     const sources = await desktopCapturer.getSources({ types: ['screen'] });
     cb({ video: sources[0] }); // primary screen (coordinates map to primary display)
   });
   win = new BrowserWindow({ width: 1200, height: 800, webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true } });
   win.setMenuBarVisibility(false);
-  win.loadFile(path.join(webDir(), 'index.html'));
+  openRoom(pendingRoom); pendingRoom = null;
 });
 app.on('window-all-closed', () => app.quit());
 

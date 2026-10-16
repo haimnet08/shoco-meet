@@ -2,6 +2,8 @@
 button,input,a.wa{font:inherit;padding:.55em 1em;border-radius:8px;border:1px solid #374151;background:#1f2937;color:inherit;cursor:pointer;text-decoration:none}
 button.primary{background:#2563eb}.danger{background:#dc2626!important}a.wa{background:#16a34a}button.on{background:#b45309}
 #lobby{display:flex;flex-direction:column;gap:12px;max-width:420px;margin:10vh auto;padding:20px;text-align:center}
+#appOpen{display:flex;flex-direction:column;gap:8px;border-bottom:1px solid #374151;padding-bottom:14px}#appOpen+input{margin-top:4px}#appOpen a.primary{display:block;background:#2563eb;padding:.7em 1em;border-radius:8px;color:inherit;text-decoration:none;font-weight:600}
+#lobby .small{font-size:.85em;color:#9ca3af;margin:0}#lobby .small a{color:#93c5fd}
 #meeting{display:flex;flex-direction:column;height:100vh}#meeting[hidden],#lobby[hidden]{display:none}
 header,footer{display:flex;gap:8px;padding:8px;flex-wrap:wrap;align-items:center;background:#0b1220}
 footer{justify-content:center}main{flex:1;display:flex;min-height:0}

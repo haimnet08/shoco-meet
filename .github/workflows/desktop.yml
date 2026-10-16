@@ -16,9 +16,48 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
       - run: npm install --no-audit --no-fund
+      # Windows code signing with Azure Artifact Signing (ex Trusted Signing), see docs/windows-signing.md.
+      # Signs only when ALL secrets + variables are present; otherwise the build is produced unsigned as before.
+      - name: Prepare Azure signing (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZ_ENDPOINT: ${{ vars.AZURE_SIGN_ENDPOINT }}
+          AZ_ACCOUNT: ${{ vars.AZURE_SIGN_ACCOUNT }}
+          AZ_PROFILE: ${{ vars.AZURE_SIGN_PROFILE }}
+          AZ_PUBLISHER: ${{ vars.AZURE_SIGN_PUBLISHER }}
+        run: |
+          MISSING=()
+          for v in AZURE_TENANT_ID AZURE_CLIENT_ID AZURE_CLIENT_SECRET AZ_ENDPOINT AZ_ACCOUNT AZ_PROFILE AZ_PUBLISHER; do
+            [[ -z "${!v}" ]] && MISSING+=("$v")
+          done
+          if [[ ${#MISSING[@]} -eq 0 ]]; then
+            echo "SIGN_ARGS=-c.win.azureSignOptions.endpoint=$AZ_ENDPOINT -c.win.azureSignOptions.codeSigningAccountName=$AZ_ACCOUNT -c.win.azureSignOptions.certificateProfileName=$AZ_PROFILE -c.win.azureSignOptions.publisherName=$AZ_PUBLISHER" >> "$GITHUB_ENV"
+            echo "SIGNING=1" >> "$GITHUB_ENV"
+            echo "Azure signing configured: the Windows installer will be signed."
+          else
+            echo "::warning::Windows build is UNSIGNED (missing: ${MISSING[*]}). Smart App Control blocks unsigned installers."
+          fi
+      - name: Install the TrustedSigning PowerShell module
+        if: runner.os == 'Windows' && env.SIGNING == '1'
+        shell: pwsh
+        run: |
+          Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force | Out-Null
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module -Name TrustedSigning -Force -Scope CurrentUser -Repository PSGallery
+          powershell -NoProfile -Command "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force | Out-Null; Set-PSRepository -Name PSGallery -InstallationPolicy Trusted; Install-Module -Name TrustedSigning -Force -Scope CurrentUser -Repository PSGallery"
+          "PSModulePath=$env:PSModulePath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       # on a tag electron-builder creates/updates the GitHub release itself, incl. latest*.yml used by the in-app updater
-      - run: npx electron-builder --publish ${{ startsWith(github.ref, 'refs/tags/') && 'always' || 'never' }}
-        env: { CSC_IDENTITY_AUTO_DISCOVERY: 'false', GH_TOKEN: '${{ secrets.GITHUB_TOKEN }}' }
+      - run: npx electron-builder --publish ${{ startsWith(github.ref, 'refs/tags/') && 'always' || 'never' }} ${{ env.SIGN_ARGS }}
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
       - uses: actions/upload-artifact@v4
         with:
           name: shoco-meet-${{ matrix.os }}

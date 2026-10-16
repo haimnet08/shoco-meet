@@ -306,7 +306,13 @@ $('recBtn').onclick = async () => {
   recorder.start(1000); $('recBtn').classList.add('on'); $('recBtn').textContent = '⏹️ עצור הקלטה';
 };
 
-$('leaveBtn').onclick = () => { if (recorder) recorder.stop(); peer && peer.destroy(); setTimeout(() => location.reload(), 300); };
+$('leaveBtn').onclick = () => {
+  if (recorder) recorder.stop(); peer && peer.destroy();
+  // Back to the lobby, not into the same room again: the desktop app is opened with ?room= by shocomeet:// links
+  // (and the browser URL carries ?room= after joining), so a plain reload would auto-join the room we just left.
+  const u = new URL(location.href); u.searchParams.delete('room');
+  setTimeout(() => location.replace(u.href), 300);
+};
 
 /* ---------- Remote control (controller side) ---------- */
 function norm(v, ev) {

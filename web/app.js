@@ -25,6 +25,7 @@ $('joinBtn').onclick = start;
    Desktop app opened by such a link: room (and the Windows user name) arrive as query params -> join at once. */
 const APP_LINK = (r) => 'shocomeet://join?room=' + encodeURIComponent(r);
 const isMobile = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
+const viaLink = isDesktop && !!qs.get('room'); // desktop app opened by a shocomeet:// invite link (the client side)
 if (isDesktop) {
   if ($('room').value && $('name').value) setTimeout(start, 100);
 } else if ($('room').value && !isMobile) {
@@ -83,7 +84,7 @@ async function start() {
   $('lobby').hidden = true; $('meeting').hidden = false;
   addTile('me', myName + ' (אני)', outStream, true);
   connectPeer(PREFIX + room);
-  if (isDesktop) setTimeout(() => toggleShare().catch(() => {}), 500);
+  if (viaLink) setTimeout(() => toggleShare().catch(() => {}), 500); // invited client: share the screen at once; from the lobby (host) share manually
 }
 
 // TURN credentials from our server (valid 12h); without them only direct/STUN connections work
@@ -220,7 +221,7 @@ function refreshTile(id) {
   const p = peers.get(id); if (!p || !p.tile) return;
   p.tile.querySelector('.label').textContent = p.name + (p.desktop ? ' 🖥️' : '');
   let b = p.tile.querySelector('.ctrl');
-  if (p.desktop && !isDesktop) {
+  if (p.desktop) { // control is possible from the browser and from the app alike
     if (!b) { b = document.createElement('button'); b.className = 'ctrl'; p.tile.appendChild(b); }
     b.textContent = controlling === id ? 'הפסק שליטה' : '🖱️ בקש שליטה';
     b.onclick = () => {

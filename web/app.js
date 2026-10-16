@@ -126,7 +126,7 @@ function setupData(c) {
   const p = entry(c.peer); p.data = c;
   if (c.metadata) { p.name = c.metadata.name || p.name; p.desktop = !!c.metadata.desktop; }
   c.on('open', () => {
-    c.send({ type: 'hello', name: myName, desktop: isDesktop });
+    c.send({ type: 'hello', name: myName, desktop: isDesktop, sharing: !!screenTrack });
     if (isHost) c.send({ type: 'peers', list: [...peers.keys()].filter((k) => k !== c.peer && peers.get(k).data) });
   });
   c.on('data', (m) => onData(c.peer, m));
@@ -155,7 +155,8 @@ function broadcast(m) { for (const id of peers.keys()) send(id, m); }
 async function onData(id, m) {
   const p = entry(id);
   switch (m.type) {
-    case 'hello': p.name = String(m.name).slice(0, 30); p.desktop = !!m.desktop; refreshTile(id); break;
+    case 'hello': p.name = String(m.name).slice(0, 30); p.desktop = !!m.desktop; refreshTile(id); if (m.sharing) sharerFocus(id, true); break;
+    case 'share': sharerFocus(id, !!m.on); break; // someone started/stopped sharing their screen -> show it alone / back to the grid
     case 'peers': m.list.forEach(link); break;
     case 'chat': addMsg(p.name, m.text); break;
     case 'ctrl-req':
@@ -187,6 +188,7 @@ function addTile(id, name, stream, muted) {
     $('videos').appendChild(tile);
     if (p) p.tile = tile;
     layoutTiles(); if (p) updateStatus();
+    if (focusId === id) setFocus(id);
   }
   const v = tile.querySelector('video'); v.srcObject = stream; v.muted = !!muted;
   tile.querySelector('.label').textContent = name;
@@ -196,15 +198,19 @@ function addTile(id, name, stream, muted) {
 // Gallery layout: pick the column count that gives every 16:9 tile the largest size inside the
 // visible area, so all tiles share one height and nothing is cut off or scrolled (phones, small
 // or scaled Windows windows). Re-run on every tile change and whenever the area resizes.
-// One tile alone (the controlled screen, or a double-clicked tile); the others are hidden until focus is cleared.
+// One tile alone (the controlled screen, a shared screen, or a double-clicked tile); the others are hidden until focus is cleared.
 function setFocus(id) {
   focusId = id;
   for (const t of $('videos').children) t.classList.toggle('focused', !!id && t.id === 'tile-' + id);
-  $('videos').classList.toggle('focus', !!id);
+  $('videos').classList.toggle('focus', !!(id && $('tile-' + id))); // only once the tile exists (its stream may arrive after the announcement)
   layoutTiles();
 }
+function sharerFocus(id, on) {
+  if (on) { if (!controlling) setFocus(id); }
+  else if (focusId === id && controlling !== id) setFocus(null);
+}
 function layoutTiles() {
-  const box = $('videos'), n = focusId ? 1 : box.children.length; if (!n) return;
+  const box = $('videos'), n = box.classList.contains('focus') ? 1 : box.children.length; if (!n) return;
   const gap = 8, W = box.clientWidth - 16, H = box.clientHeight - 16;
   let best = { cols: 1, rows: n, size: -1 };
   for (let cols = 1; cols <= n; cols++) {
@@ -305,11 +311,13 @@ async function toggleShare() {
   screenTrack = s.getVideoTracks()[0];
   replaceVideo(screenTrack); $('shareBtn').classList.add('on'); $('shareBtn').textContent = '🖥️ הפסק שיתוף';
   screenTrack.onended = shareEnded; // browser "Stop sharing" bar
+  broadcast({ type: 'share', on: true });
 }
 function shareEnded() {
   if (!screenTrack) return;
   screenTrack = null; replaceVideo(camStream.getVideoTracks()[0]);
   $('shareBtn').classList.remove('on'); $('shareBtn').textContent = '🖥️ שיתוף מסך';
+  broadcast({ type: 'share', on: false });
 }
 $('shareBtn').onclick = () => toggleShare().catch((e) => status('שיתוף מסך בוטל: ' + e.name));
 

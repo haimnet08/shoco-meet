@@ -272,14 +272,16 @@ function replaceVideo(track) {
   $('tile-me').querySelector('video').srcObject = outStream;
 }
 async function toggleShare() {
-  if (screenTrack) { screenTrack.stop(); return; }
+  if (screenTrack) { screenTrack.stop(); shareEnded(); return; } // stop() fires no 'ended' on its own track
   const s = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 15 }, audio: false });
   screenTrack = s.getVideoTracks()[0];
   replaceVideo(screenTrack); $('shareBtn').classList.add('on'); $('shareBtn').textContent = '🖥️ הפסק שיתוף';
-  screenTrack.onended = () => {
-    screenTrack = null; replaceVideo(camStream.getVideoTracks()[0]);
-    $('shareBtn').classList.remove('on'); $('shareBtn').textContent = '🖥️ שיתוף מסך';
-  };
+  screenTrack.onended = shareEnded; // browser "Stop sharing" bar
+}
+function shareEnded() {
+  if (!screenTrack) return;
+  screenTrack = null; replaceVideo(camStream.getVideoTracks()[0]);
+  $('shareBtn').classList.remove('on'); $('shareBtn').textContent = '🖥️ שיתוף מסך';
 }
 $('shareBtn').onclick = () => toggleShare().catch((e) => status('שיתוף מסך בוטל: ' + e.name));
 

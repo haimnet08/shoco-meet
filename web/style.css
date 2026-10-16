@@ -9,7 +9,7 @@ header,footer{display:flex;gap:8px;padding:8px;flex-wrap:wrap;align-items:center
 footer{justify-content:center}main{flex:1;display:flex;min-height:0}
 #videos{flex:1;min-width:0;min-height:0;display:grid;grid-template-columns:1fr;grid-auto-rows:minmax(0,1fr);gap:8px;padding:8px;overflow:hidden}
 .tile{position:relative;background:#000;border-radius:10px;overflow:hidden;min-width:0;min-height:0}
-.tile video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}.tile.controlling video{outline:3px solid #f59e0b;cursor:crosshair}
+.tile video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}.tile.controlling video{outline:3px solid #f59e0b;cursor:none}
 .tile .label{position:absolute;bottom:6px;right:6px;background:#0009;padding:2px 8px;border-radius:6px;font-size:.85em}
 .tile .ctrl{position:absolute;top:6px;left:6px;font-size:.8em}
 .tile .fs{position:absolute;top:6px;right:6px;font-size:.9em;padding:.2em .5em;opacity:.7}.tile .fs:hover{opacity:1}

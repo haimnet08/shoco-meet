@@ -66,7 +66,7 @@ app.whenReady().then(() => {
     const primary = String(screen.getPrimaryDisplay().id);
     cb({ video: sources.find((s) => String(s.display_id) === primary) || sources[0] }); // remote-control coordinates map to the primary display
   });
-  win = new BrowserWindow({ width: 1200, height: 800, webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true } });
+  win = new BrowserWindow({ width: 1200, height: 800, webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, backgroundThrottling: false } });
   win.setMenuBarVisibility(false);
   openRoom(pendingRoom); pendingRoom = null;
 });

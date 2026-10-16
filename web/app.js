@@ -231,6 +231,8 @@ if (isDesktop && window.shocoDesktop.onUpdateReady) {
 
 /* ---------- Desktop app download (for remote control) ---------- */
 const RELEASES = 'https://github.com/haimnet08/shoco-meet/releases/latest';
+const STORE_URL = ''; // Microsoft Store page once the app is listed (apps.microsoft.com/detail/<ProductId>); empty = GitHub installer
+if (STORE_URL) { $('dlWin').href = STORE_URL; $('lobbyDl').href = STORE_URL; }
 if (isDesktop) $('dlBtn').hidden = true; // already installed
 $('dlBtn').onclick = () => {
   $('dlRoom').textContent = room;

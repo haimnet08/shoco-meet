@@ -38,7 +38,7 @@ app.on('open-url', (e, url) => { e.preventDefault(); const r = roomFromUrl(url);
    macOS: unsigned builds cannot self-install, so only announce the new version with a download link. */
 const RELEASES_URL = 'https://github.com/haimnet08/shoco-meet/releases/latest';
 function setupUpdates() {
-  if (!autoUpdater || !app.isPackaged) return;
+  if (!autoUpdater || !app.isPackaged || process.windowsStore) return; // Store builds are updated by the Microsoft Store
   autoUpdater.logger = null;
   autoUpdater.autoInstallOnAppQuit = true;
   autoUpdater.autoDownload = process.platform !== 'darwin';

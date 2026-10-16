@@ -26,6 +26,8 @@
     "protocols": [{ "name": "Shoco Meet", "schemes": ["shocomeet"] }],
     "publish": [{ "provider": "github", "owner": "haimnet08", "repo": "shoco-meet", "releaseType": "release" }],
     "win": { "target": "nsis" },
+    "appx": { "applicationId": "ShocoMeet", "displayName": "Shoco Meet", "languages": ["he-IL", "en-US"], "backgroundColor": "#1e3a8a",
+      "capabilities": ["runFullTrust", "internetClient", "internetClientServer", "privateNetworkClientServer", "webcam", "microphone"] },
     "mac": { "target": "dmg", "category": "public.app-category.business" },
     "linux": { "target": "AppImage", "category": "Network" }
   }

@@ -58,6 +58,18 @@ jobs:
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      # Microsoft Store package (unsigned AppX, the Store signs it). Built only when the Partner Center identity is set
+      # as repository variables APPX_IDENTITY_NAME / APPX_PUBLISHER / APPX_PUBLISHER_DISPLAY (Product identity page).
+      - name: Microsoft Store package (AppX)
+        if: runner.os == 'Windows' && vars.APPX_IDENTITY_NAME != '' && vars.APPX_PUBLISHER != ''
+        shell: bash
+        env: { CSC_IDENTITY_AUTO_DISCOVERY: 'false' }
+        run: npx electron-builder --win appx --publish never -c.appx.identityName="${{ vars.APPX_IDENTITY_NAME }}" -c.appx.publisher="${{ vars.APPX_PUBLISHER }}" -c.appx.publisherDisplayName="${{ vars.APPX_PUBLISHER_DISPLAY }}"
+      - uses: actions/upload-artifact@v4
+        if: runner.os == 'Windows' && vars.APPX_IDENTITY_NAME != '' && vars.APPX_PUBLISHER != ''
+        with:
+          name: shoco-meet-store-appx
+          path: desktop/dist/*.appx
       - uses: actions/upload-artifact@v4
         with:
           name: shoco-meet-${{ matrix.os }}

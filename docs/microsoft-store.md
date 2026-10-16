@@ -45,5 +45,9 @@ into `STORE_URL` in `web/app.js` and deploy (the "Windows" download buttons then
 - Store builds set `process.windowsStore`, so the in-app updater is off there (the Store updates).
 - Protocol `shocomeet://` is declared in the AppX manifest (electron-builder `protocols`), so the
   invite page still opens the installed app directly.
+- Capabilities come from `build.appx.capabilities` in `desktop/package.json` (electron-builder 26
+  maps them to the right manifest element: `<Capability>` for internetClient etc.,
+  `<rescap:Capability>` for runFullTrust, `<DeviceCapability>` for webcam and microphone). To check
+  a built package: unzip `Shoco-Meet-win.appx` and read `AppxManifest.xml`.
 - The GitHub installer (unsigned exe) stays for machines where the Store is blocked and
   Smart App Control is off.
